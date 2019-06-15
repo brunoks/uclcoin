@@ -11,13 +11,14 @@ import requests
 import grequests
 import json
 import re
+import os
 import numpy as np
 from hashlib import sha256
 
-server = MongoClient('mongodb+srv://pi:pi@cluster0-tdudc.azure.mongodb.net/test?retryWrites=true')
+server = MongoClient('mongodb+srv://bbk:123@cluster0-3e65c.mongodb.net/test?retryWrites=true&w=majority')
 uclcoindb = server.uclcoin
 blockchain = BlockChain(mongodb=uclcoindb)
-domain = 'https://blockchainpiv.azurewebsites.net' #Insert your domain
+domain = 'https://uclcriptocoin.herokuapp.com' #Insert your domain
 
 app = Flask(__name__)
 
@@ -295,6 +296,25 @@ def get_reset_all_blockchains():
         address = node['address']
         url = "{}/reset_blockchain".format(address)
         requests.get(url)
+                             
+@app.route('/generate_wallet', methods=['GET'])
+def generateWallet():
+    wallet = KeyPair()
+    data = {
+        'private_key':wallet.private_key,
+        'public_key':wallet.public_key
+    }
+    return jsonify(data), 200
 
+@app.route('/generate_public_key', methods=['POST'])
+def generatePublicKey():
+    json = request.get_json(force=True)
+    wallet = KeyPair(json["private_key"])
+    data = {
+        'public_key':wallet.public_key
+    }
+    return jsonify(data), 200
+                             
 if __name__ == '__main__':
-    app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
